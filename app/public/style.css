@@ -68,7 +68,24 @@ img { max-width: 100%; height: auto; }
 .topo__titulo { border-left: 1px solid var(--c-linha); padding-left: var(--e-5); }
 .topo__titulo strong { display: block; font-family: var(--f-titulo); font-size: var(--t-lg); color: var(--c-titulo); line-height: 1.2; }
 .sobre { margin: 0; color: var(--c-texto-suave); font-size: var(--t-xs); text-transform: uppercase; letter-spacing: .04em; }
-.topo__acoes { margin-left: auto; display: flex; align-items: center; gap: var(--e-3); font-size: var(--t-sm); }
+.topo__acoes { margin-left: auto; display: flex; align-items: center; gap: var(--e-2) var(--e-4); font-size: var(--t-sm); flex-wrap: wrap; justify-content: flex-end; }
+.menu-link {
+  font-family: var(--f-titulo); font-weight: 700; text-transform: uppercase; letter-spacing: .04em; text-decoration: none;
+  color: var(--c-texto); padding: var(--e-1) 0; border-bottom: 2px solid transparent;
+}
+.menu-link:hover { color: var(--c-acao); }
+.menu-link.atual { color: var(--c-acao); border-bottom-color: var(--irb-vermelho); }
+.menu-usuario { color: var(--c-texto-suave); padding-left: var(--e-4); border-left: 1px solid var(--c-linha); display: inline-flex; gap: var(--e-2); align-items: center; }
+.btn-sm { padding: var(--e-2) var(--e-4); font-size: var(--t-sm); }
+
+/* Login / cadastro / perfil */
+.estreito { max-width: 30rem; }
+.pilha { display: flex; flex-direction: column; gap: var(--e-4); }
+.dica { font-weight: 400; font-size: var(--t-xs); color: var(--c-texto-suave); }
+.nota-centro { text-align: center; font-size: var(--t-sm); margin: 0; }
+.dados { display: grid; grid-template-columns: max-content 1fr; gap: var(--e-2) var(--e-5); margin: 0 0 var(--e-5); font-size: 1rem; }
+.dados dt { font-weight: 600; color: var(--c-titulo); }
+.dados dd { margin: 0; }
 
 /* Título da página (sublinhado vermelho do tema) */
 .cabecalho-pagina { padding-block: var(--e-6) var(--e-2); }
@@ -177,6 +194,10 @@ th { font-family: var(--f-titulo); font-size: var(--t-xs); text-transform: upper
   .escada { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .marca__logo { height: 2.75rem; }
   .topo__titulo { border: 0; padding: 0; flex-basis: 100%; }
+  .topo__acoes { margin-left: 0; justify-content: flex-start; flex-basis: 100%; }
+  .menu-usuario { border: 0; padding-left: 0; }
+  .dados { grid-template-columns: 1fr; gap: 0; }
+  .dados dd { margin-bottom: var(--e-2); }
   .secao { padding: var(--e-5) var(--e-4); }
 }
 @media print { .passos, .rodape-form, .topo__acoes, .rodape { display: none; } body { background: #fff; } }

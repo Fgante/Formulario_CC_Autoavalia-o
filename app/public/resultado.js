@@ -15,7 +15,7 @@ window.renderResultado = function renderResultado(r, el, extra = {}) {
         : '<span class="tag no">Não alcançado</span>';
     return `<tr><td><strong>${nomes[id]}</strong></td>
       <td>${e.gatesAtendidos} / ${e.totalGates}${e.gatesFalhos.length ? `<div class="nota">Falharam: ${e.gatesFalhos.map(esc).join(', ')}</div>` : ''}</td>
-      <td>${pont}${e.itensNA ? `<div class="nota">${e.itensNA} item(ns) N/A fora da base</div>` : ''}</td><td>${status}</td></tr>`;
+      <td>${pont}${e.itensNA ? `<div class="nota">${e.itensNA} item(ns) N/A fora da base</div>` : ''}${e.maximo === 0 ? '<div class="nota">Todos os itens [P] marcados N/A: sem base de pontuação</div>' : ''}</td><td>${status}</td></tr>`;
   }).join('');
 
   const L = r.lacunas;

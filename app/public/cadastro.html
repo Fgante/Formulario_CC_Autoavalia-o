@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cadastro – Autoavaliação GCSP</title>
+  <link rel="stylesheet" href="/style.css">
+  <meta name="robots" content="noindex">
+</head>
+<body>
+  <header class="topo">
+    <div class="wrap">
+      <img class="marca__logo" src="/img/logo-irb.png" alt="Instituto Rui Barbosa" width="138" height="56">
+      <div class="topo__titulo"><p class="sobre">Comitê Técnico de Custos no Setor Público</p><strong>Autoavaliação de Maturidade</strong></div>
+    </div>
+  </header>
+  <main class="wrap estreito">
+    <div class="cabecalho-pagina"><h1>Criar conta</h1><p>Cadastre-se para responder o questionário e acompanhar suas avaliações.</p></div>
+    <form id="form" class="secao pilha" novalidate>
+      <label>Nome completo *<input name="nome" autocomplete="name" required maxlength="200"></label>
+      <label>E-mail *<input name="email" type="email" autocomplete="email" required maxlength="200"></label>
+      <label>Login *<input name="login" autocomplete="username" autocapitalize="none" required maxlength="40" pattern="[a-z0-9._\-]{3,40}">
+        <span class="dica">3 a 40 caracteres: letras minúsculas, números, ponto, hífen ou sublinhado.</span></label>
+      <label>Senha *<input name="senha" type="password" autocomplete="new-password" required minlength="8">
+        <span class="dica">Mínimo de 8 caracteres.</span></label>
+      <label>Confirmar senha *<input name="senha2" type="password" autocomplete="new-password" required minlength="8"></label>
+      <button class="btn" type="submit">Criar conta</button>
+      <p id="erro" class="erros" hidden></p>
+      <p class="nota-centro">Já tem conta? <a id="link-login" href="/login.html">Entrar</a></p>
+    </form>
+  </main>
+  <footer class="rodape"><div class="wrap"><p><strong>Instituto Rui Barbosa</strong> · Comitê Técnico de Custos no Setor Público</p></div></footer>
+  <script>
+    const volta = new URLSearchParams(location.search).get('volta');
+    const destino = volta && volta.startsWith('/') && !volta.startsWith('//') ? volta : '/';
+    const f = document.getElementById('form');
+    f.login.addEventListener('input', () => { f.login.value = f.login.value.toLowerCase().replace(/\s/g, ''); });
+    f.addEventListener('submit', async (ev) => {
+      ev.preventDefault();
+      const erro = document.getElementById('erro');
+      const mostrar = (m) => { erro.textContent = m; erro.hidden = false; };
+      erro.hidden = true;
+      if (f.senha.value !== f.senha2.value) return mostrar('As senhas não conferem.');
+      const btn = f.querySelector('button'); btn.disabled = true;
+      try {
+        const r = await fetch('/api/cadastro', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nome: f.nome.value, email: f.email.value, login: f.login.value, senha: f.senha.value }) });
+        if (r.ok) { location.href = destino; return; }
+        mostrar((await r.json().catch(() => ({}))).erro || 'Não foi possível criar a conta.');
+      } finally { btn.disabled = false; }
+    });
+  </script>
+</body>
+</html>

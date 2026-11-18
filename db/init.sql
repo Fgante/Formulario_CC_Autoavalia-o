@@ -1,6 +1,6 @@
 -- Banco do formulário de Autoavaliação de Maturidade (Anexo 4 – GCSP)
 
--- 1) Órgãos avaliados
+-- Órgãos avaliados
 CREATE TABLE orgaos (
     id            SERIAL PRIMARY KEY,
     nome          VARCHAR(255) NOT NULL,
@@ -14,10 +14,22 @@ CREATE TABLE orgaos (
     criado_em     TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
--- 3) Classificação recebida em cada avaliação (uma linha por envio do formulário)
+-- Usuários do sistema (cadastro pelo site = 'usuario'; administradores definidos via node usuarios.js)
+CREATE TABLE usuarios (
+    id          SERIAL PRIMARY KEY,
+    login       VARCHAR(80)  NOT NULL UNIQUE,
+    senha_hash  TEXT         NOT NULL,               -- scrypt (salt:hash)
+    nome        VARCHAR(200),
+    email       VARCHAR(200),
+    perfil      VARCHAR(10)  NOT NULL DEFAULT 'usuario' CHECK (perfil IN ('usuario', 'admin')),
+    criado_em   TIMESTAMPTZ  NOT NULL DEFAULT now()
+);
+
+-- Classificação recebida em cada avaliação (uma linha por envio do formulário)
 CREATE TABLE classificacoes (
     id                SERIAL PRIMARY KEY,
     orgao_id          INTEGER NOT NULL REFERENCES orgaos(id) ON DELETE CASCADE,
+    usuario_id        INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,   -- quem respondeu
     data_avaliacao    DATE NOT NULL,
     objeto_custo      TEXT NOT NULL,                 -- item 5 do Anexo 4 (objeto de avaliação)
     justificativa     TEXT,
@@ -28,8 +40,9 @@ CREATE TABLE classificacoes (
     criado_em         TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX idx_classificacoes_orgao ON classificacoes(orgao_id);
+CREATE INDEX idx_classificacoes_usuario ON classificacoes(usuario_id);
 
--- 2) Respostas (uma linha por questão respondida)
+-- Respostas (uma linha por questão respondida)
 CREATE TABLE respostas (
     id                SERIAL PRIMARY KEY,
     orgao_id          INTEGER NOT NULL REFERENCES orgaos(id) ON DELETE CASCADE,
@@ -45,11 +58,3 @@ CREATE TABLE respostas (
     UNIQUE (classificacao_id, questao_codigo)
 );
 CREATE INDEX idx_respostas_orgao ON respostas(orgao_id);
-
--- Usuários com acesso à área restrita (/admin). Gerenciar com: node usuarios.js
-CREATE TABLE IF NOT EXISTS usuarios (
-    id          SERIAL PRIMARY KEY,
-    login       VARCHAR(80) NOT NULL UNIQUE,
-    senha_hash  TEXT NOT NULL,                     -- scrypt (salt:hash)
-    criado_em   TIMESTAMPTZ NOT NULL DEFAULT now()
-);

@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Meu perfil – GCSP</title>
+  <link rel="stylesheet" href="/style.css">
+  <meta name="robots" content="noindex">
+</head>
+<body>
+  <header class="topo">
+    <div class="wrap">
+      <img class="marca__logo" src="/img/logo-irb.png" alt="Instituto Rui Barbosa" width="138" height="56">
+      <div class="topo__titulo"><p class="sobre">Comitê Técnico de Custos no Setor Público</p><strong>Autoavaliação de Maturidade</strong></div>
+      <nav class="topo__acoes" id="menu"></nav>
+    </div>
+  </header>
+  <main class="wrap">
+    <div class="cabecalho-pagina"><h1>Meu perfil</h1><p>Seus dados e os questionários que você respondeu.</p></div>
+    <section class="secao perfil">
+      <h2>Dados da conta</h2>
+      <dl class="dados" id="dados"></dl>
+      <a class="btn" href="/">+ Novo formulário</a>
+    </section>
+    <section class="secao">
+      <h2>Meus questionários</h2>
+      <div class="tabela-wrap"><table>
+        <thead id="lista-cabecalho"></thead>
+        <tbody id="lista"><tr><td>Carregando…</td></tr></tbody>
+      </table></div>
+    </section>
+    <section id="detalhe"></section>
+  </main>
+  <footer class="rodape"><div class="wrap"><p><strong>Instituto Rui Barbosa</strong> · Comitê Técnico de Custos no Setor Público</p></div></footer>
+  <script src="/nav.js"></script>
+  <script src="/resultado.js"></script>
+  <script src="/avaliacoes.js"></script>
+  <script>
+    const esc = (t) => String(t ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    window.usuarioAtual.then(async (u) => {
+      const rows = await window.montarListaAvaliacoes({ url: '/api/avaliacoes', mostrarRespondente: false, vazio: 'Você ainda não respondeu nenhum questionário. <a href="/">Responder agora</a>' });
+      document.getElementById('dados').innerHTML = `
+        <dt>Nome</dt><dd>${esc(u.nome || '—')}</dd>
+        <dt>Login</dt><dd>${esc(u.login)}</dd>
+        <dt>E-mail</dt><dd>${esc(u.email || '—')}</dd>
+        <dt>Perfil</dt><dd>${u.perfil === 'admin' ? 'Administrador' : 'Usuário'}</dd>
+        <dt>Questionários respondidos</dt><dd>${rows.length}</dd>`;
+      const id = new URLSearchParams(location.search).get('avaliacao');
+      if (id) document.querySelector(`#lista a[data-id="${CSS.escape(id)}"]`)?.click();
+    });
+  </script>
+</body>
+</html>

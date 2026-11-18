@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Todas as avaliações – GCSP</title>
+  <link rel="stylesheet" href="/style.css">
+  <meta name="robots" content="noindex">
+</head>
+<body>
+  <header class="topo">
+    <div class="wrap">
+      <img class="marca__logo" src="/img/logo-irb.png" alt="Instituto Rui Barbosa" width="138" height="56">
+      <div class="topo__titulo"><p class="sobre">Comitê Técnico de Custos no Setor Público</p><strong>Autoavaliação de Maturidade</strong></div>
+      <nav class="topo__acoes" id="menu"></nav>
+    </div>
+  </header>
+  <main class="wrap">
+    <div class="cabecalho-pagina"><h1>Todas as avaliações</h1><p id="resumo">Avaliações enviadas por todos os usuários. Clique no órgão para ver a classificação e as respostas.</p></div>
+    <section class="secao"><div class="tabela-wrap"><table>
+      <thead id="lista-cabecalho"></thead>
+      <tbody id="lista"><tr><td>Carregando…</td></tr></tbody>
+    </table></div></section>
+    <section id="detalhe"></section>
+  </main>
+  <footer class="rodape"><div class="wrap"><p><strong>Instituto Rui Barbosa</strong> · Comitê Técnico de Custos no Setor Público</p></div></footer>
+  <script src="/nav.js"></script>
+  <script src="/resultado.js"></script>
+  <script src="/avaliacoes.js"></script>
+  <script>
+    window.montarListaAvaliacoes({ url: '/api/admin/avaliacoes', mostrarRespondente: true, vazio: 'Nenhuma avaliação ainda.' })
+      .then((rows) => { if (rows.length) document.getElementById('resumo').textContent = `${rows.length} avaliação(ões) enviadas por todos os usuários. Clique no órgão para ver a classificação e as respostas.`; });
+  </script>
+</body>
+</html>

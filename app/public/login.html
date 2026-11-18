@@ -3,36 +3,40 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Acesso restrito – GCSP</title>
-  <link rel="stylesheet" href="style.css">
+  <title>Entrar – Autoavaliação GCSP</title>
+  <link rel="stylesheet" href="/style.css">
   <meta name="robots" content="noindex">
 </head>
 <body>
   <header class="topo">
     <div class="wrap">
-      <img class="marca__logo" src="img/logo-irb.png" alt="Instituto Rui Barbosa" width="138" height="56">
+      <img class="marca__logo" src="/img/logo-irb.png" alt="Instituto Rui Barbosa" width="138" height="56">
       <div class="topo__titulo"><p class="sobre">Comitê Técnico de Custos no Setor Público</p><strong>Autoavaliação de Maturidade</strong></div>
     </div>
   </header>
-  <main class="wrap" style="max-width:28rem">
-    <div class="cabecalho-pagina"><h1>Acesso restrito</h1><p>Área para consulta das avaliações salvas.</p></div>
-    <form id="login" class="secao" style="display:flex; flex-direction:column; gap:1rem">
-      <label>Usuário<input name="login" autocomplete="username" required></label>
+  <main class="wrap estreito">
+    <div class="cabecalho-pagina"><h1>Entrar</h1><p>Acesse para responder o Instrumento de Autoavaliação de Maturidade.</p></div>
+    <form id="form" class="secao pilha">
+      <label>Login<input name="login" autocomplete="username" autocapitalize="none" required></label>
       <label>Senha<input name="senha" type="password" autocomplete="current-password" required></label>
       <button class="btn" type="submit">Entrar</button>
       <p id="erro" class="erros" hidden></p>
+      <p class="nota-centro">Ainda não tem conta? <a id="link-cadastro" href="/cadastro.html">Cadastre-se</a></p>
     </form>
   </main>
   <footer class="rodape"><div class="wrap"><p><strong>Instituto Rui Barbosa</strong> · Comitê Técnico de Custos no Setor Público</p></div></footer>
   <script>
-    const f = document.getElementById('login');
+    const volta = new URLSearchParams(location.search).get('volta');
+    const destino = volta && volta.startsWith('/') && !volta.startsWith('//') ? volta : '/';
+    if (volta) document.getElementById('link-cadastro').href += `?volta=${encodeURIComponent(destino)}`;
+    const f = document.getElementById('form');
     f.addEventListener('submit', async (ev) => {
       ev.preventDefault();
       const erro = document.getElementById('erro');
       erro.hidden = true;
       const r = await fetch('/api/login', { method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ login: f.login.value, senha: f.senha.value }) });
-      if (r.ok) { location.href = '/admin'; return; }
+      if (r.ok) { location.href = destino; return; }
       erro.textContent = (await r.json().catch(() => ({}))).erro || 'Falha no login.';
       erro.hidden = false;
     });

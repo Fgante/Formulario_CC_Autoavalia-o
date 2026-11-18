@@ -1,4 +1,5 @@
 (async function () {
+  const usuario = await window.usuarioAtual;
   const { ESTAGIOS, DIMENSOES, QUESTOES } = await (await fetch('/api/questionario')).json();
   const form = document.getElementById('form');
   const secoesEl = document.getElementById('secoes');
@@ -10,6 +11,8 @@
 
   // Data no formato brasileiro (dd/mm/aaaa); convertida para ISO só no envio
   form.data.value = new Date().toLocaleDateString('pt-BR');
+  if (!form.responsavel.value) form.responsavel.value = usuario.nome || '';
+  if (!form.email.value) form.email.value = usuario.email || '';
   form.data.addEventListener('input', () => {
     const d = form.data.value.replace(/\D/g, '').slice(0, 8);
     form.data.value = d.replace(/^(\d{2})(\d)/, '$1/$2').replace(/^(\d{2})\/(\d{2})(\d)/, '$1/$2/$3');
@@ -178,7 +181,7 @@
       el.hidden = false;
       window.renderResultado(data, el, {
         cabecalho: `<p>${esc(v('nome'))} · Avaliação nº ${data.id} salva</p>`,
-        rodape: '<p><a href="/">Nova avaliação</a> · <a href="#" onclick="print();return false">Imprimir</a></p>',
+        rodape: `<p><a href="/perfil?avaliacao=${data.id}">Ver no meu perfil</a> · <a href="/">Nova avaliação</a> · <a href="#" onclick="print();return false">Imprimir</a></p>`,
       });
       window.scrollTo({ top: 0 });
     } catch (e) {

@@ -407,7 +407,8 @@ function classificar(respostas) {
     const totalGates = qs.filter((q) => q.tipo === 'O').length;
     const minimo = e.corte == null ? null : Math.ceil(e.corte * maximo - 1e-9);
     const gatesOk = gatesFalhos.length === 0;
-    const pontuacaoOk = e.corte == null ? true : pontos >= minimo;
+    // Com todos os itens [P] em N/A não há base de pontuação: o estágio não pode ser considerado alcançado.
+    const pontuacaoOk = e.corte == null ? true : maximo > 0 && pontos >= minimo;
     porEstagio[e.id] = {
       estagio: e.id, titulo: e.titulo, totalGates, gatesAtendidos: totalGates - gatesFalhos.length, gatesFalhos,
       pontos: e.corte == null ? null : pontos, maximo: e.corte == null ? null : maximo, minimo,
