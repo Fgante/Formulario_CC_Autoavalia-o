@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Autoavaliação de Maturidade – GCSP</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topo">
+    <div class="wrap">
+      <div>
+        <p class="sobre">Guia de Custos para o Setor Público · Anexo 4</p>
+        <h1>Instrumento de Autoavaliação de Maturidade</h1>
+      </div>
+    </div>
+  </header>
+
+  <nav class="passos wrap" id="passos"></nav>
+
+  <main class="wrap">
+    <form id="form" novalidate>
+      <section class="secao" data-secao="ID">
+        <h2>Identificação do órgão</h2>
+        <div class="grid">
+          <label class="col2">Nome do órgão / entidade *<input name="nome" required maxlength="255"></label>
+          <label>CNPJ *<input name="cnpj" required inputmode="numeric" placeholder="00.000.000/0000-00" maxlength="18"></label>
+          <label>Esfera *
+            <select name="esfera" required>
+              <option value="">Selecione…</option><option>Federal</option><option>Estadual</option><option>Municipal</option><option>Distrital</option>
+            </select>
+          </label>
+          <label>Poder
+            <select name="poder"><option value="">—</option><option>Executivo</option><option>Legislativo</option><option>Judiciário</option><option>Ministério Público</option><option>Tribunal de Contas</option><option>Defensoria Pública</option></select>
+          </label>
+          <label>UF<input name="uf" maxlength="2"></label>
+          <label>Município<input name="municipio" maxlength="120"></label>
+          <label>Responsável pelo preenchimento<input name="responsavel" maxlength="200"></label>
+          <label>E-mail<input name="email" type="email" maxlength="200"></label>
+          <label>Data da avaliação *<input name="data" required inputmode="numeric" placeholder="dd/mm/aaaa" maxlength="10" autocomplete="off"></label>
+        </div>
+        <h3>Objeto de avaliação <small>(item 5 do Anexo 4)</small></h3>
+        <div class="grid">
+          <label class="col2">Objeto(s) de custo avaliado(s) *<textarea name="objeto_custo" required rows="2" placeholder="Ex.: Hospital Municipal X; Secretaria de Educação…"></textarea></label>
+          <label class="col2">Justificativa da escolha<textarea name="justificativa" rows="2"></textarea></label>
+        </div>
+      </section>
+      <div id="secoes"></div>
+
+      <div class="rodape">
+        <button type="button" class="btn sec" id="voltar">← Voltar</button>
+        <span id="contador"></span>
+        <button type="button" class="btn" id="avancar">Avançar →</button>
+        <button type="submit" class="btn" id="enviar" hidden>Enviar e ver classificação</button>
+      </div>
+      <p id="erros" class="erros" hidden></p>
+    </form>
+
+    <section id="resultado" hidden></section>
+  </main>
+
+  <script src="resultado.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

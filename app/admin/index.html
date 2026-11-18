@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Avaliações salvas – GCSP</title>
+  <link rel="stylesheet" href="/style.css">
+  <meta name="robots" content="noindex">
+</head>
+<body>
+  <header class="topo">
+    <div class="wrap">
+      <div><p class="sobre">Guia de Custos para o Setor Público · Área restrita</p><h1>Avaliações salvas</h1></div>
+      <div><span id="usuario" style="opacity:.8; margin-right:12px"></span><button class="btn sec" id="sair" style="color:#fff; border-color:#fff">Sair</button></div>
+    </div>
+  </header>
+  <main class="wrap" style="padding-block:20px">
+    <section class="secao"><div class="tabela-wrap"><table>
+      <thead><tr><th>#</th><th>Órgão</th><th>Data</th><th>Objeto de custo</th><th>Classificação</th></tr></thead>
+      <tbody id="lista"><tr><td colspan="5">Carregando…</td></tr></tbody>
+    </table></div></section>
+    <section id="detalhe"></section>
+  </main>
+  <script src="/resultado.js"></script>
+  <script>
+    const esc = (t) => String(t ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    async function api(url) {
+      const r = await fetch(url);
+      if (r.status === 401) { location.href = '/login.html'; throw new Error('sessão expirada'); }
+      return r.json();
+    }
+    async function abrir(id) {
+      const c = await api('/api/admin/avaliacoes/' + id);
+      const el = document.getElementById('detalhe');
+      const resp = c.respostas.map((r) => `<tr><td class="cod">${esc(r.questao_codigo)}</td><td>${esc(r.resposta)}${r.itens_marcados ? `<div class="nota">${r.itens_marcados.length} item(ns) marcado(s)</div>` : ''}</td><td>${r.tipo === 'P' ? (r.pontos ?? 'N/A') : (r.atende_gate ? '✓' : '✗')}</td></tr>`).join('');
+      window.renderResultado({ nivel: c.nivel, triagemOk: c.triagem_aprovada, classificacao: c.classificacao, ...c.detalhes }, el, {
+        cabecalho: `<p>${esc(c.nome)} · Avaliação nº ${c.id} · ${new Date(c.data_avaliacao).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</p>`,
+        rodape: `<h3>Respostas</h3><div class="tabela-wrap"><table><thead><tr><th>Questão</th><th>Resposta</th><th>Pts / Gate</th></tr></thead><tbody>${resp}</tbody></table></div>`,
+      });
+      el.scrollIntoView({ behavior: 'smooth' });
+    }
+    document.getElementById('sair').onclick = async () => { await fetch('/api/logout', { method: 'POST' }); location.href = '/login.html'; };
+    api('/api/admin/me').then((m) => { document.getElementById('usuario').textContent = m.login; });
+    api('/api/admin/avaliacoes').then((rows) => {
+      document.getElementById('lista').innerHTML = rows.length ? rows.map((r) => `
+        <tr><td>${r.id}</td><td><a href="#" onclick="abrir(${r.id});return false">${esc(r.nome)}</a><div class="nota">${esc(r.esfera)} · CNPJ ${esc(r.cnpj)}</div></td>
+        <td>${new Date(r.data_avaliacao).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</td><td>${esc(r.objeto_custo)}</td>
+        <td><strong>${r.nivel ? 'E' + r.nivel : '—'}</strong> ${esc(r.classificacao)}</td></tr>`).join('')
+        : '<tr><td colspan="5">Nenhuma avaliação ainda.</td></tr>';
+    });
+  </script>
+</body>
+</html>

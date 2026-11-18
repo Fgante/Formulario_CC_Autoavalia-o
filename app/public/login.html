@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Acesso restrito – GCSP</title>
+  <link rel="stylesheet" href="style.css">
+  <meta name="robots" content="noindex">
+</head>
+<body>
+  <header class="topo">
+    <div class="wrap"><div><p class="sobre">Guia de Custos para o Setor Público · Anexo 4</p><h1>Acesso restrito</h1></div></div>
+  </header>
+  <main class="wrap" style="padding-block:32px; max-width:420px">
+    <form id="login" class="secao" style="display:flex; flex-direction:column; gap:14px">
+      <label>Usuário<input name="login" autocomplete="username" required></label>
+      <label>Senha<input name="senha" type="password" autocomplete="current-password" required></label>
+      <button class="btn" type="submit">Entrar</button>
+      <p id="erro" class="erros" hidden></p>
+    </form>
+  </main>
+  <script>
+    const f = document.getElementById('login');
+    f.addEventListener('submit', async (ev) => {
+      ev.preventDefault();
+      const erro = document.getElementById('erro');
+      erro.hidden = true;
+      const r = await fetch('/api/login', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ login: f.login.value, senha: f.senha.value }) });
+      if (r.ok) { location.href = '/admin'; return; }
+      erro.textContent = (await r.json().catch(() => ({}))).erro || 'Falha no login.';
+      erro.hidden = false;
+    });
+  </script>
+</body>
+</html>
