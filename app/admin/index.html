@@ -10,17 +10,20 @@
 <body>
   <header class="topo">
     <div class="wrap">
-      <div><p class="sobre">Guia de Custos para o Setor Público · Área restrita</p><h1>Avaliações salvas</h1></div>
-      <div><span id="usuario" style="opacity:.8; margin-right:12px"></span><button class="btn sec" id="sair" style="color:#fff; border-color:#fff">Sair</button></div>
+      <img class="marca__logo" src="/img/logo-irb.png" alt="Instituto Rui Barbosa" width="138" height="56">
+      <div class="topo__titulo"><p class="sobre">Comitê Técnico de Custos no Setor Público</p><strong>Área restrita</strong></div>
+      <div class="topo__acoes"><span id="usuario" style="color:var(--c-texto-suave)"></span><button class="btn sec" id="sair">Sair</button></div>
     </div>
   </header>
-  <main class="wrap" style="padding-block:20px">
+  <main class="wrap">
+    <div class="cabecalho-pagina"><h1>Avaliações salvas</h1><p>Clique no órgão para ver a classificação e as respostas.</p></div>
     <section class="secao"><div class="tabela-wrap"><table>
       <thead><tr><th>#</th><th>Órgão</th><th>Data</th><th>Objeto de custo</th><th>Classificação</th></tr></thead>
       <tbody id="lista"><tr><td colspan="5">Carregando…</td></tr></tbody>
     </table></div></section>
     <section id="detalhe"></section>
   </main>
+  <footer class="rodape"><div class="wrap"><p><strong>Instituto Rui Barbosa</strong> · Comitê Técnico de Custos no Setor Público</p></div></footer>
   <script src="/resultado.js"></script>
   <script>
     const esc = (t) => String(t ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));

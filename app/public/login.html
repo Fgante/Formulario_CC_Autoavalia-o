@@ -9,16 +9,21 @@
 </head>
 <body>
   <header class="topo">
-    <div class="wrap"><div><p class="sobre">Guia de Custos para o Setor Público · Anexo 4</p><h1>Acesso restrito</h1></div></div>
+    <div class="wrap">
+      <img class="marca__logo" src="img/logo-irb.png" alt="Instituto Rui Barbosa" width="138" height="56">
+      <div class="topo__titulo"><p class="sobre">Comitê Técnico de Custos no Setor Público</p><strong>Autoavaliação de Maturidade</strong></div>
+    </div>
   </header>
-  <main class="wrap" style="padding-block:32px; max-width:420px">
-    <form id="login" class="secao" style="display:flex; flex-direction:column; gap:14px">
+  <main class="wrap" style="max-width:28rem">
+    <div class="cabecalho-pagina"><h1>Acesso restrito</h1><p>Área para consulta das avaliações salvas.</p></div>
+    <form id="login" class="secao" style="display:flex; flex-direction:column; gap:1rem">
       <label>Usuário<input name="login" autocomplete="username" required></label>
       <label>Senha<input name="senha" type="password" autocomplete="current-password" required></label>
       <button class="btn" type="submit">Entrar</button>
       <p id="erro" class="erros" hidden></p>
     </form>
   </main>
+  <footer class="rodape"><div class="wrap"><p><strong>Instituto Rui Barbosa</strong> · Comitê Técnico de Custos no Setor Público</p></div></footer>
   <script>
     const f = document.getElementById('login');
     f.addEventListener('submit', async (ev) => {
