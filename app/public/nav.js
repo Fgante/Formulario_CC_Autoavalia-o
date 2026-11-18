@@ -1,4 +1,12 @@
-// Menu do usuário logado. Preenche <nav id="menu"> e expõe window.usuarioAtual (Promise).
+// =============================================================================
+// MENU do usuário logado (incluído em todas as páginas de paginas/).
+//   - Busca quem está logado (GET /api/me); se ninguém, manda para o login.
+//   - Monta os links: todos veem "Novo formulário" e "Meu perfil";
+//     só admin vê "Todas as avaliações".
+//   - Expõe window.usuarioAtual (Promise com { id, login, nome, email, perfil })
+//     para as outras telas usarem.
+// Atenção: esconder o link é só visual – quem realmente bloqueia é o servidor (exigirAdmin).
+// =============================================================================
 window.usuarioAtual = (async () => {
   const r = await fetch('/api/me');
   if (r.status === 401) { location.href = `/login.html?volta=${encodeURIComponent(location.pathname)}`; return new Promise(() => {}); }

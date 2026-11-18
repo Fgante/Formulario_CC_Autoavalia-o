@@ -1,4 +1,9 @@
-// Lista de avaliações + detalhe (usado em "Meu perfil" e em "Todas as avaliações")
+// =============================================================================
+// LISTA DE AVALIAÇÕES SALVAS + DETALHE (leitura do banco, via API)
+// Usado em "Meu perfil" (url /api/avaliacoes → só as do usuário) e em
+// "Todas as avaliações" (url /api/admin/avaliacoes → todas, com quem respondeu).
+// Ao clicar num órgão, busca /api/avaliacoes/:id e mostra classificação + respostas.
+// =============================================================================
 window.montarListaAvaliacoes = async function montarListaAvaliacoes({ url, mostrarRespondente, vazio }) {
   const esc = (t) => String(t ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const dataBR = (d) => new Date(d).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
@@ -16,6 +21,7 @@ window.montarListaAvaliacoes = async function montarListaAvaliacoes({ url, mostr
   const cols = ['#', 'Órgão', 'Data', 'Objeto de custo', ...(mostrarRespondente ? ['Respondido por'] : []), 'Classificação'];
   thead.innerHTML = `<tr>${cols.map((c) => `<th>${c}</th>`).join('')}</tr>`;
 
+  // Detalhe de uma avaliação: resultado (resultado.js) + tabela com cada resposta
   async function abrir(id) {
     const c = await api(`/api/avaliacoes/${id}`);
     const resp = c.respostas.map((r) => `<tr><td class="cod">${esc(r.questao_codigo)}</td><td>${esc(r.resposta)}${r.itens_marcados ? `<div class="nota">${r.itens_marcados.length} item(ns) marcado(s)</div>` : ''}</td><td>${r.tipo === 'P' ? (r.pontos ?? 'N/A') : (r.atende_gate ? '✓' : '✗')}</td></tr>`).join('');
@@ -28,6 +34,7 @@ window.montarListaAvaliacoes = async function montarListaAvaliacoes({ url, mostr
     detalhe.scrollIntoView({ behavior: 'smooth' });
   }
 
+  // Monta a tabela com a lista
   try {
     const rows = await api(url);
     tbody.innerHTML = rows.length ? rows.map((r) => `

@@ -1,9 +1,23 @@
+// =============================================================================
+// PERGUNTAS + CÁLCULO DA CLASSIFICAÇÃO
 // Instrumento de Autoavaliação de Maturidade – Anexo 4 do GCSP (Guia de Custos para o Setor Público)
-// tipo "O" = Gate obrigatório (Sim/Não ou checklist em que todos os itens devem ser atendidos)
-// tipo "P" = Pontuável (escala de aderência, admite N/A)
+//
+// Este é o "coração" das regras de negócio. Contém:
+//   1. ESTAGIOS  – Triagem e Estágios 1 a 4, com o percentual de corte de cada um
+//   2. QUESTOES  – todas as perguntas, transcritas do Anexo 4
+//   3. avaliarQuestao() – interpreta UMA resposta (atende o gate? quantos pontos?)
+//   4. classificar()    – CÁLCULO FINAL: decide o estágio alcançado
+//
+// Para mudar uma pergunta, opção, pontuação ou corte, altere SÓ este arquivo:
+// o formulário (public/app.js) e o servidor (server.js) leem tudo daqui.
+//
+// Tipos de questão:
+//   tipo "O" = Gate obrigatório (Sim/Não ou checklist em que todos os itens devem ser atendidos)
+//   tipo "P" = Pontuável (escala de aderência 0–2 ou 0–3, admite N/A)
+// =============================================================================
 
-const SIM_NAO = null; // gate binário simples
-
+// ---------- Listas de atributos usadas nos gates "Atributos obrigatórios" (E1/E2/E3/E4.TEC.1) ----------
+// Cada estágio exige os atributos do anterior e acrescenta novos.
 const ATR_E1 = {
   'Atributos de identificação': ['Descrição', 'Unidade Gestora/Jurisdicionada', 'Responsáveis', 'Modelo de gestão', 'Quantitativo de EPs vinculados'],
   'Atributos de dimensão operacional e de capacidade': ['Endereço', 'Natureza', 'Condição', 'Turno de funcionamento'],
@@ -32,6 +46,8 @@ const ATR_E4 = {
 };
 const flatGroups = (g) => Object.entries(g).flatMap(([grupo, itens]) => itens.map((t) => ({ grupo, t })));
 
+// ---------- 1. ESTÁGIOS e percentual de corte (item 3 do Anexo 4) ----------
+// corte = pontuação mínima nas questões [P], em fração do máximo possível (0.60 = 60%)
 const ESTAGIOS = [
   { id: 'TP', titulo: 'Parte A – Triagem Preparatória', subtitulo: 'Fase diagnóstica inicial – avaliação de habilitação', corte: null,
     descricao: 'Todos os itens são gates [O]. Resposta "Não" em qualquer item interrompe a avaliação e classifica a entidade como Fase Preparatória.' },
@@ -47,9 +63,16 @@ const DIMENSOES = {
 
 const NOTA_SICONFI = 'Considerar a pontuação vigente no Ranking Siconfi na data da avaliação. Não aplicável para instituições federais.';
 
+// Atalhos para declarar perguntas:
+//   o(codigo, titulo, texto, { itens?, naFederal?, nota? })  → gate [O]
+//       itens     = vira checklist (gate só é "Sim" se todos forem marcados)
+//       naFederal = permite "N/A (instituição federal)" – usado nos gates do Ranking Siconfi
+//   p(codigo, titulo, texto, [[textoDaOpcao, pontos], ...])   → pontuável [P]
 const o = (codigo, titulo, texto, extra = {}) => ({ codigo, tipo: 'O', titulo, texto, ...extra });
 const p = (codigo, titulo, texto, opcoes) => ({ codigo, tipo: 'P', titulo, texto, opcoes: opcoes.map(([t, v]) => ({ t, v })) });
 
+// ---------- 2. QUESTÕES (transcritas do Anexo 4) ----------
+// O código define o estágio e a dimensão: "E2.TEC.3" = Estágio 2, dimensão TEC.
 const QUESTOES = [
   // ---------------- TRIAGEM PREPARATÓRIA ----------------
   o('TP.1', 'Existência de sistema contábil – SIAFIC', 'A entidade possui, formalmente instituído, Sistema Único e Integrado de Execução Orçamentária, Administração Financeira e Controle (SIAFIC), com funcionalidades que permitem o registro dos fatos geradores segundo o regime de competência?'),
@@ -361,12 +384,15 @@ const QUESTOES = [
     ['Estudos de custo-efetividade são realizados apenas sob demanda externa ou de forma esporádica', 1],
     ['Análises de Custo-Benefício e Custo-Efetividade são mandatórias para criação/alteração de políticas públicas, com prestação de contas em Relato Integrado', 2]]),
 ].map((q) => {
+  // Deriva estágio e dimensão a partir do código (ex.: "E1.MET.2" → estagio E1, dimensao MET)
   const [est, dim] = q.codigo.split('.');
   return { ...q, estagio: est === 'TP' ? 'TP' : est, dimensao: est === 'TP' ? null : dim };
 });
 
 // ---------------------------------------------------------------------------
-// Avaliação de uma resposta individual
+// 3. AVALIAÇÃO DE UMA RESPOSTA INDIVIDUAL
+// Recebe a pergunta e a resposta crua enviada pelo formulário e devolve:
+//   { respondida, atende (gates), pontos/max (pontuáveis), na, texto (gravado no banco) }
 // Respostas aceitas:
 //   gate simples   -> "sim" | "nao" | "na" (só para gates do Ranking Siconfi, instituição federal)
 //   gate checklist -> array de índices marcados (atende se todos marcados)
@@ -390,8 +416,22 @@ function avaliarQuestao(q, resp) {
   return { respondida: true, texto: q.opcoes[idx].t, pontos: q.opcoes[idx].v, max };
 }
 
-// Classificação conforme itens 3, 4 e 7 do Anexo 4
+// ---------------------------------------------------------------------------
+// 4. CÁLCULO DA CLASSIFICAÇÃO (itens 3, 4 e 7 do Anexo 4)
+//
+// Entrada: objeto { codigoDaQuestao: resposta } (o mesmo que o formulário envia)
+// Saída:   { nivel 0–4, triagemOk, classificacao (texto), estagios (detalhe por estágio), lacunas }
+//
+// Regras:
+//   a) Cada estágio é apurado SEPARADAMENTE (pontos não se somam entre estágios).
+//   b) Estágio N é alcançado se: 100% dos gates [O] atendidos  E
+//      pontos [P] >= teto(corte × pontuação máxima válida). Itens N/A saem da base.
+//   c) Classificação final = maior estágio CONSECUTIVO alcançado (1 → 2 → 3 → 4),
+//      desde que a Triagem Preparatória tenha sido aprovada.
+//   d) "Gap analysis" = o que falta (gates e pontos) para o próximo estágio.
+// ---------------------------------------------------------------------------
 function classificar(respostas) {
+  // --- a/b) Apuração independente de cada estágio ---
   const porEstagio = {};
   for (const e of ESTAGIOS) {
     const qs = QUESTOES.filter((q) => q.estagio === e.id);
@@ -405,6 +445,7 @@ function classificar(respostas) {
       else { maximo += Math.max(...q.opcoes.map((x) => x.v)); validos += 1; } // não respondida conta como 0
     }
     const totalGates = qs.filter((q) => q.tipo === 'O').length;
+    // Pontuação mínima = corte × máximo, arredondada para CIMA (regra do item 7 do Anexo 4)
     const minimo = e.corte == null ? null : Math.ceil(e.corte * maximo - 1e-9);
     const gatesOk = gatesFalhos.length === 0;
     // Com todos os itens [P] em N/A não há base de pontuação: o estágio não pode ser considerado alcançado.
@@ -417,6 +458,7 @@ function classificar(respostas) {
     };
   }
 
+  // --- c) Maior estágio consecutivo alcançado (para no primeiro que falhar) ---
   let nivel = 0;
   const triagemOk = porEstagio.TP.alcancado;
   if (triagemOk) {
@@ -425,12 +467,13 @@ function classificar(respostas) {
     }
   }
 
+  // Texto da classificação (o que aparece na tela e é gravado em classificacoes.classificacao)
   let classificacao;
   if (!triagemOk) classificacao = 'Fase Preparatória – Imaturidade Estrutural (Habilitação pendente)';
   else if (nivel === 0) classificacao = 'Habilitada (Triagem aprovada) – Estágio 1 ainda não alcançado';
   else classificacao = `Estágio ${nivel} – ${ESTAGIOS.find((x) => x.nivel === nivel).classificacao}`;
 
-  // Gap analysis: o que falta para o próximo estágio
+  // --- d) Gap analysis: o que falta para o próximo estágio ---
   const proximoId = !triagemOk ? 'TP' : (nivel < 4 ? `E${nivel + 1}` : null);
   let lacunas = null;
   if (proximoId) {

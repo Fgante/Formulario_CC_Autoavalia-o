@@ -31,6 +31,9 @@
   </main>
   <footer class="rodape"><div class="wrap"><p><strong>Instituto Rui Barbosa</strong> · Comitê Técnico de Custos no Setor Público</p></div></footer>
   <script>
+    // CRIAÇÃO DE CONTA (lado do navegador): confere as duas senhas e envia para
+    // POST /api/cadastro (server.js), que valida, grava o usuário e já faz o login.
+    // `volta` = página para onde ir depois (só caminhos internos, começando com "/").
     const volta = new URLSearchParams(location.search).get('volta');
     const destino = volta && volta.startsWith('/') && !volta.startsWith('//') ? volta : '/';
     const f = document.getElementById('form');

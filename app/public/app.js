@@ -1,15 +1,34 @@
+// =============================================================================
+// FORMULÁRIO (navegador) – monta as perguntas na tela, controla as etapas,
+// valida o preenchimento e ENVIA as respostas para o servidor.
+//
+// Importante: este arquivo NÃO calcula a classificação. O cálculo oficial é
+// feito no servidor (app/questoes.js → classificar), que devolve o resultado
+// pronto; aqui só exibimos (via resultado.js).
+//
+// Fluxo:  carrega perguntas (GET /api/questionario)
+//         → usuário responde etapa por etapa (objeto `respostas`)
+//         → envia (POST /api/avaliacoes)
+//         → mostra a classificação devolvida pelo servidor.
+// =============================================================================
 (async function () {
+  // Usuário logado (vem de nav.js) e a lista de perguntas (vem de app/questoes.js)
   const usuario = await window.usuarioAtual;
   const { ESTAGIOS, DIMENSOES, QUESTOES } = await (await fetch('/api/questionario')).json();
   const form = document.getElementById('form');
   const secoesEl = document.getElementById('secoes');
   const passosEl = document.getElementById('passos');
+  // Respostas do usuário, no formato que o servidor espera:
+  //   { "TP.1": "sim", "E1.MET.1": [0,1,2,3], "E1.MET.2": 2, "E1.TEC.3": "na", ... }
+  //   gate simples → "sim"/"nao"/"na" | gate checklist → índices marcados | pontuável → índice da opção ou "na"
   const respostas = {};
+  // Etapas do formulário: Identificação, Triagem (TP) e Estágios E1..E4
   const passos = ['ID', ...ESTAGIOS.map((e) => e.id)];
   let atual = 0;
   const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
-  // Data no formato brasileiro (dd/mm/aaaa); convertida para ISO só no envio
+  // ---------- Campos da identificação: valores iniciais e máscaras ----------
+  // Data no formato brasileiro (dd/mm/aaaa); convertida para ISO (aaaa-mm-dd) só no envio
   form.data.value = new Date().toLocaleDateString('pt-BR');
   if (!form.responsavel.value) form.responsavel.value = usuario.nome || '';
   if (!form.email.value) form.email.value = usuario.email || '';
@@ -30,7 +49,11 @@
       .replace(/\.(\d{3})(\d)/, '.$1/$2').replace(/(\d{4})(\d)/, '$1-$2');
   });
 
-  // ---------- Renderização das questões ----------
+  // ---------- Montagem das perguntas na tela ----------
+  // Gera o HTML de UMA pergunta conforme o tipo:
+  //   gate checklist → caixas de seleção (gate = Sim só se todas marcadas)
+  //   gate simples   → Sim / Não (e N/A nos gates do Ranking Siconfi)
+  //   pontuável      → opções com os pontos de cada uma + N/A
   function htmlQuestao(q) {
     const nome = `q_${q.codigo}`;
     let corpo;
@@ -57,6 +80,7 @@
       <p>${esc(q.texto)}</p>${q.nota ? `<p class="nota">${esc(q.nota)}</p>` : ''}${corpo}</div>`;
   }
 
+  // Uma seção (etapa) por estágio, com as perguntas agrupadas por dimensão (MET, AMP, TEC...)
   for (const e of ESTAGIOS) {
     const qs = QUESTOES.filter((q) => q.estagio === e.id);
     let html = `<section class="secao" data-secao="${e.id}" hidden><h2>${esc(e.titulo)}</h2>`;
@@ -75,11 +99,14 @@
     secoesEl.insertAdjacentHTML('beforeend', `${html}</section>`);
   }
 
-  // ---------- Estado ----------
+  // ---------- Registro das respostas ----------
   const qPorCodigo = Object.fromEntries(QUESTOES.map((q) => [q.codigo, q]));
+  // Qualquer "Não" na Triagem interrompe a avaliação (Fase Preparatória) e esconde os estágios
   const tpFalhou = () => QUESTOES.some((q) => q.estagio === 'TP' && respostas[q.codigo] === 'nao');
+  // Checklist sempre conta como respondido (nenhum item marcado = gate "Não")
   const respondida = (q) => (q.itens ? true : respostas[q.codigo] !== undefined);
 
+  // Cada clique em uma opção grava a resposta no objeto `respostas`
   form.addEventListener('change', (ev) => {
     const name = ev.target.name || '';
     if (!name.startsWith('q_')) return;
@@ -98,8 +125,10 @@
     atualizar();
   });
 
+  // ---------- Navegação entre etapas ----------
   function passosVisiveis() { return tpFalhou() ? passos.slice(0, 2) : passos; }
 
+  // Redesenha a barra de etapas, mostra só a seção atual, alterna Avançar/Enviar e atualiza o contador
   function atualizar() {
     const vis = passosVisiveis();
     if (atual >= vis.length) atual = vis.length - 1;
@@ -122,6 +151,8 @@
     return QUESTOES.filter((q) => q.estagio === id).every(respondida);
   }
 
+  // ---------- Validação (no navegador; o servidor valida de novo ao receber) ----------
+  // Marca em vermelho o que falta na etapa e rola até o primeiro problema
   function validarPasso(id) {
     let primeiro = null;
     if (id === 'ID') {
@@ -154,7 +185,9 @@
   document.getElementById('voltar').onclick = () => ir(atual - 1);
   form.addEventListener('input', (ev) => { ev.target.classList?.remove('invalido'); });
 
-  // ---------- Envio ----------
+  // ---------- ENVIO: manda as respostas ao servidor e mostra a classificação ----------
+  // O servidor (POST /api/avaliacoes em server.js) valida, CALCULA a classificação,
+  // SALVA no banco e devolve o resultado, que é exibido por renderResultado (resultado.js).
   form.addEventListener('submit', async (ev) => {
     ev.preventDefault();
     const errosEl = document.getElementById('erros');
@@ -165,6 +198,8 @@
     // checklists nunca marcados são enviados como lista vazia (gate não atendido)
     for (const q of QUESTOES) if (q.itens && !respostas[q.codigo]) respostas[q.codigo] = [];
     const v = (n) => form[n].value;
+    // Corpo da requisição: dados do órgão, da avaliação e as respostas
+    // (se a Triagem falhou, só as respostas da Triagem são enviadas)
     const corpo = {
       orgao: { nome: v('nome'), cnpj: v('cnpj'), esfera: v('esfera'), poder: v('poder'), uf: v('uf'), municipio: v('municipio'), responsavel: v('responsavel'), email: v('email') },
       avaliacao: { data: dataISO(v('data')), objeto_custo: v('objeto_custo'), justificativa: v('justificativa') },
@@ -176,6 +211,7 @@
       const resp = await fetch('/api/avaliacoes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(corpo) });
       const data = await resp.json();
       if (!resp.ok) throw new Error((data.erros || ['Erro ao enviar.']).join('\n'));
+      // SAÍDA: esconde o formulário e mostra a classificação calculada pelo servidor
       form.hidden = true; passosEl.hidden = true;
       const el = document.getElementById('resultado');
       el.hidden = false;

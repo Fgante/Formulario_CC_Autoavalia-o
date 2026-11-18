@@ -26,6 +26,8 @@
   </main>
   <footer class="rodape"><div class="wrap"><p><strong>Instituto Rui Barbosa</strong> · Comitê Técnico de Custos no Setor Público</p></div></footer>
   <script>
+    // LOGIN (lado do navegador): envia para POST /api/login (server.js). Se der certo, o servidor
+    // grava o cookie de sessão e voltamos para a página que a pessoa tentou abrir (`volta`).
     const volta = new URLSearchParams(location.search).get('volta');
     const destino = volta && volta.startsWith('/') && !volta.startsWith('//') ? volta : '/';
     if (volta) document.getElementById('link-cadastro').href += `?volta=${encodeURIComponent(destino)}`;

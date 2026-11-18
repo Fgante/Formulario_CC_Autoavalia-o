@@ -1,11 +1,16 @@
+# =============================================================================
+# EXEMPLO / PROTÓTIPO – configuração para rodar localmente.
+# As senhas abaixo são de teste; troque-as antes de qualquer uso real.
+# =============================================================================
 services:
+  # Banco PostgreSQL. Na PRIMEIRA criação executa db/init.sql (cria as tabelas).
   db:
     image: postgres:16-alpine
     container_name: gcsp-db
     environment:
       POSTGRES_DB: gcsp
       POSTGRES_USER: gcsp
-      POSTGRES_PASSWORD: gcsp123
+      POSTGRES_PASSWORD: gcsp123        # senha de teste
     ports:
       - "127.0.0.1:5433:5432"   # só acessível deste computador (DBeaver/pgAdmin): localhost:5433
     volumes:
@@ -16,11 +21,15 @@ services:
       interval: 5s
       retries: 10
 
+  # Aplicação Node (pasta app/): serve as páginas, calcula a classificação e grava no banco.
   app:
     build: ./app
     container_name: gcsp-app
     environment:
       DATABASE_URL: postgres://gcsp:gcsp123@db:5432/gcsp
+      # Para produção (com HTTPS), acrescente:
+      # SESSION_SECRET: <texto aleatório longo>   # mantém as sessões após reiniciar
+      # COOKIE_SECURE: "true"                     # cookie só trafega por HTTPS
     ports:
       - "3000:3000"
     depends_on:
