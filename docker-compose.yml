@@ -41,7 +41,8 @@ services:
   tunel:
     image: cloudflare/cloudflared:2024.12.2
     container_name: gcsp-tunel
-    command: tunnel --no-autoupdate --url http://app:3000
+    # --protocol http2: usa TCP em vez de QUIC/UDP, que algumas redes bloqueiam
+    command: tunnel --no-autoupdate --protocol http2 --url http://app:3000
     depends_on:
       - app
     profiles: ["tunel"]
